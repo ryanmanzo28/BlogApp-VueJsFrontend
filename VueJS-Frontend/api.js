@@ -1,5 +1,5 @@
-const CONTENT_API_BASE = "http://localhost:8081";
-const AUTH_API_BASE = "http://localhost:3000";
+const CONTENT_API_BASE = "";
+const AUTH_API_BASE = "";
 const TOKEN_KEY = "auth_token";
 
 export function getToken() {
@@ -48,7 +48,7 @@ async function apiFetch(url, options = {}) {
 }
 
 export async function getAllPosts() {
-  const response = await apiFetch(`${CONTENT_API_BASE}/posts`, {
+  const response = await apiFetch(`${CONTENT_API_BASE}/api/posts`, {
     method: "GET",
   });
 

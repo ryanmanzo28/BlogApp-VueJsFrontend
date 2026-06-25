@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "npm --prefix ./VueJS-Frontend run dev",
+    "build": "npm --prefix ./VueJS-Frontend run build",
+    "preview": "npm --prefix ./VueJS-Frontend run preview"
+  },
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

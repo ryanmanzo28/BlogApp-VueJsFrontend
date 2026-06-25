@@ -16,6 +16,7 @@ const app = express();
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const BACKEND_API_BASE = process.env.BACKEND_API_BASE || "http://backend";
 
 function verifyPassword(plainPassword, storedPassword) {
     if (typeof storedPassword !== "string") {
@@ -78,7 +79,33 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+app.get("/api/posts", async (_req, res) => {
+    try {
+        const response = await fetch(`${BACKEND_API_BASE}/posts`, {
+            headers: { Accept: "application/json" },
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ posts: [] });
+        }
+
+        const data = await response.json();
+        return res.json({ posts: Array.isArray(data.posts) ? data.posts : [] });
+    } catch (_error) {
+        return res.status(502).json({ posts: [] });
+    }
+});
+
 const distPath = path.resolve(__dirname, "dist");
+const loginPagePath = path.resolve(__dirname, "login.html");
+
+app.get("/login", (_req, res) => {
+    res.sendFile(loginPagePath);
+});
+app.get("/login.html", (_req, res) => {
+    res.sendFile(loginPagePath);
+});
+
 app.use(express.static(distPath));
 app.use((_req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
