@@ -5,6 +5,7 @@ import mysql from "mysql2/promise";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
+// this took me way too long to figure out for some reason but this just checks user credentials against the database and returns a JWT token if successful. The token is signed with a secret key that is stored in the .env file of the backend project. The token expires in 15 minutes. The server listens on port 3000 by default but can be changed with the SERVER_PORT environment variable.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,7 +62,7 @@ app.post("/api/login", async (req, res) => {
         );
 
         const user = Array.isArray(rows) ? rows[0] : null;
-        if (!user || !bcrypt.compareSync(password, user.password)) {
+        if (!user || !verifyPassword(password, user.password)) {
             return res.status(401).json({ error: "invalid credentials" });
         }
 

@@ -71,8 +71,6 @@ services:
       PMA_USER: root
       PMA_PASSWORD: ${MARIADB_ROOT_PASSWORD:-password}
       PMA_ARBITRARY: 1
-    ports:
-      - "${PHPMYADMIN_EXTERNAL_PORT:-8082}:80"
     depends_on:
       - db
     networks:
