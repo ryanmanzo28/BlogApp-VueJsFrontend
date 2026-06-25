@@ -1,4 +1,5 @@
 import express from "express";
+import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import jwt from "jsonwebtoken";
@@ -15,12 +16,24 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
+function verifyPassword(plainPassword, storedPassword) {
+    if (typeof storedPassword !== "string") {
+        return false;
+    }
+
+    if (storedPassword.startsWith("$2")) {
+        return bcrypt.compareSync(plainPassword, storedPassword);
+    }
+
+    return plainPassword === storedPassword;
+}
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT || 3307),
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "password",
-    database: process.env.DB_NAME || "app",
+    port: Number(process.env.DB_PORT || process.env.DATABASE_EXTERNAL_PORT || 3307),
+    user: process.env.DB_USER || process.env.MARIADB_ROOT_USER || "root",
+    password: process.env.DB_PASSWORD || process.env.MARIADB_ROOT_PASSWORD || "password",
+    database: process.env.DB_NAME || process.env.MYSQL_DATABASE || "app",
     waitForConnections: true,
     connectionLimit: 10,
 });
@@ -48,7 +61,7 @@ app.post("/api/login", async (req, res) => {
         );
 
         const user = Array.isArray(rows) ? rows[0] : null;
-        if (!user || user.password !== password) {
+        if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).json({ error: "invalid credentials" });
         }
 
