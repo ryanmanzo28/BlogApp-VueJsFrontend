@@ -1,6 +1,10 @@
 <template>
     <main class="home-shell">
-        <a class="profile-button" href="/profile.html" aria-label="Profile">
+        <a
+            class="profile-button"
+            :href="this.isLoggedIn ? '/profile.html' : '/login'"
+            aria-label="Profile"
+        >
             <span class="profile-button__ring">
                 <span class="profile-button__head"></span>
                 <span class="profile-button__body"></span>
