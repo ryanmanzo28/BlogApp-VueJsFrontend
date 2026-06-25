@@ -31,6 +31,7 @@ COPY --from=builder /app/dist ./dist
 COPY VueJS-Frontend/server.js .
 COPY VueJS-Frontend/main.js .
 COPY VueJS-Frontend/index.vue .
+COPY VueJS-Frontend/assets ./assets
 COPY VueJS-Frontend/login.html .
 COPY VueJS-Frontend/signup.html .
 COPY VueJS-Frontend/logout.html .

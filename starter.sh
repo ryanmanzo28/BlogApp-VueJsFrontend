@@ -1,6 +1,13 @@
 #!/bin/bash
+set -e
 
-cd "/Users/ryanmanzo/Desktop/Hydracor Project 3/VueJS-Frontend" && npm install && npm run build &&
-cd "/Users/ryanmanzo/Desktop/Hydracor Project 3" && docker compose up -d &&
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+cd "$SCRIPT_DIR/VueJS-Frontend"
+npm install
+npm run build
+
+cd "$SCRIPT_DIR"
+docker compose up -d --build
 docker compose exec backend sh -lc "/var/www/html/bin/cake migrations migrate"
 echo "done"

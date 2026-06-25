@@ -12,6 +12,7 @@ export function setToken(token) {
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("auth_email");
 }
 
 export async function loginAndStoreToken(email, password) {
@@ -34,6 +35,7 @@ export async function loginAndStoreToken(email, password) {
   }
 
   setToken(data.token);
+  localStorage.setItem("auth_email", email);
   return data.token;
 }
 

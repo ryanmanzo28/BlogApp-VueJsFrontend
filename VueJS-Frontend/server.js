@@ -88,7 +88,7 @@ app.post("/api/login", async (req, res) => {
 
     try {
         const [rows] = await pool.query(
-            "SELECT id, email, password FROM users WHERE LOWER(email) = ? LIMIT 1",
+            "SELECT id, email, password FROM users WHERE LOWER(email) = ? ORDER BY id DESC LIMIT 1",
             [normalizedEmail],
         );
 
@@ -126,6 +126,15 @@ app.post("/api/signup", async (req, res) => {
     }
 
     try {
+        const [existing] = await pool.query(
+            "SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1",
+            [normalizedEmail],
+        );
+
+        if (Array.isArray(existing) && existing.length > 0) {
+            return res.status(409).json({ error: "email already exists" });
+        }
+
         const hashedPassword = bcrypt.hashSync(password, BCRYPT_ROUNDS);
         const [result] = await pool.query(
             "INSERT INTO users (email, password, role) VALUES (?, ?, 'user')",
@@ -139,7 +148,11 @@ app.post("/api/signup", async (req, res) => {
         );
 
         return res.status(201).json({ token });
-    } catch (_error) {
+    } catch (error) {
+        if (error && error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ error: "email already exists" });
+        }
+
         return res.status(500).json({ error: "signup failed" });
     }
 });
@@ -188,6 +201,7 @@ const distPath = path.resolve(__dirname, "dist");
 const assetsPath = path.resolve(__dirname, "assets");
 const loginPagePath = path.resolve(__dirname, "login.html");
 const logoutPagePath = path.resolve(__dirname, "logout.html");
+const signupPagePath = path.resolve(__dirname, "signup.html");
 
 app.get("/login", (_req, res) => {
     res.sendFile(loginPagePath);
@@ -202,10 +216,10 @@ app.get("/logout.html", (_req, res) => {
     res.sendFile(logoutPagePath);
 });
 app.get("/signup", (_req, res) => {
-    res.redirect("/login");
+    res.sendFile(signupPagePath);
 });
 app.get("/signup.html", (_req, res) => {
-    res.redirect("/login");
+    res.sendFile(signupPagePath);
 });
 
 app.use("/assets", express.static(assetsPath));
