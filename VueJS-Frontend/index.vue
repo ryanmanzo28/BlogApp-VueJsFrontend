@@ -173,7 +173,12 @@ export default {
     text-decoration: none;
     padding: 15px 0;
     border-top: 1px solid rgba(45, 53, 83, 0.12);
-    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        color 180ms ease;
 }
 
 .post-card:first-of-type {
@@ -197,18 +202,23 @@ export default {
 }
 
 .post-card:hover {
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 12px 24px rgba(53, 68, 116, 0.08);
-    transform: translateY(-3px);
-    border-radius: 12px;
-    padding-left: 12px;
-    padding-right: 12px;
-    margin-left: -12px;
-    margin-right: -12px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 16px 30px rgba(53, 68, 116, 0.12);
+    transform: translateY(-4px);
+    border-radius: 18px;
+    border-color: rgba(93, 116, 198, 0.18);
+    padding-left: 14px;
+    padding-right: 14px;
+    margin-left: -14px;
+    margin-right: -14px;
 }
 
 .post-card:hover .read-more {
     color: #4f6ed9;
+}
+
+.post-card:hover h3 {
+    color: #1f2a44;
 }
 
 .read-more {
