@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
 // this took me way too long to figure out for some reason but this just checks user credentials against the database and returns a JWT token if successful. The token is signed with a secret key that is stored in the .env file of the backend project. The token expires in 15 minutes. The server listens on port 3000 by default but can be changed with the SERVER_PORT environment variable.
-
+// ive considered refactoring this file, but it works for now and im lazy.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -80,15 +80,16 @@ app.get("/api/db-health", async (_req, res) => {
 
 app.post("/api/login", async (req, res) => {
     const { email, password } = req.body ?? {};
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
         return res.status(400).json({ error: "email and password are required" });
     }
 
     try {
         const [rows] = await pool.query(
-            "SELECT id, email, password FROM users WHERE email = ? LIMIT 1",
-            [email],
+            "SELECT id, email, password FROM users WHERE LOWER(email) = ? LIMIT 1",
+            [normalizedEmail],
         );
 
         const user = Array.isArray(rows) ? rows[0] : null;
@@ -118,8 +119,9 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/signup", async (req, res) => {
     const { email, password } = req.body ?? {};
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
         return res.status(400).json({ error: "email and password are required" });
     }
 
@@ -127,11 +129,11 @@ app.post("/api/signup", async (req, res) => {
         const hashedPassword = bcrypt.hashSync(password, BCRYPT_ROUNDS);
         const [result] = await pool.query(
             "INSERT INTO users (email, password, role) VALUES (?, ?, 'user')",
-            [email, hashedPassword],
+            [normalizedEmail, hashedPassword],
         );
 
         const token = jwt.sign(
-            { sub: result.insertId, email },
+            { sub: result.insertId, email: normalizedEmail },
             JWT_SECRET,
             { expiresIn: "15m" },
         );
@@ -165,7 +167,7 @@ app.get("/api/me", requireAuth, async (req, res) => {
     }
 });
 
-app.get("/api/posts", requireAuth, async (_req, res) => {
+app.get("/api/posts", async (_req, res) => {
     try {
         const response = await fetch(`${BACKEND_API_BASE}/posts`, {
             headers: { Accept: "application/json" },
@@ -185,7 +187,7 @@ app.get("/api/posts", requireAuth, async (_req, res) => {
 const distPath = path.resolve(__dirname, "dist");
 const assetsPath = path.resolve(__dirname, "assets");
 const loginPagePath = path.resolve(__dirname, "login.html");
-const signupPagePath = path.resolve(__dirname, "signup.html");
+const logoutPagePath = path.resolve(__dirname, "logout.html");
 
 app.get("/login", (_req, res) => {
     res.sendFile(loginPagePath);
@@ -193,17 +195,30 @@ app.get("/login", (_req, res) => {
 app.get("/login.html", (_req, res) => {
     res.sendFile(loginPagePath);
 });
+app.get("/logout", (_req, res) => {
+    res.sendFile(logoutPagePath);
+});
+app.get("/logout.html", (_req, res) => {
+    res.sendFile(logoutPagePath);
+});
 app.get("/signup", (_req, res) => {
-    res.sendFile(signupPagePath);
+    res.redirect("/login");
 });
 app.get("/signup.html", (_req, res) => {
-    res.sendFile(signupPagePath);
+    res.redirect("/login");
 });
 
 app.use("/assets", express.static(assetsPath));
 app.use(express.static(distPath));
-app.use((_req, res) => {
+app.get("/", (_req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
+});
+app.use((req, res) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/assets")) {
+        return res.status(404).end();
+    }
+
+    return res.redirect("/login");
 });
 
 const port = Number(process.env.SERVER_PORT || 3000);

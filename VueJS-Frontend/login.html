@@ -29,7 +29,7 @@
         document.getElementById("loginForm").addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const email = document.getElementById("email").value;
+            const email = document.getElementById("email").value.trim().toLowerCase();
             const password = document.getElementById("password").value;
 
             try {
@@ -42,7 +42,16 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Login failed");
+                    let message = "Login failed";
+                    try {
+                        const body = await response.json();
+                        if (body && typeof body.error === "string" && body.error) {
+                            message = body.error;
+                        }
+                    } catch (_err) {
+                        // Keep default message when response has no JSON body.
+                    }
+                    throw new Error(message);
                 }
 
                 const data = await response.json();
@@ -51,7 +60,8 @@
                 window.location.href = "/";
             } catch (error) {
                 console.error("Error:", error);
-                alert("Login failed. Please check your credentials and try again.");
+                const message = error instanceof Error ? error.message : "Login failed";
+                alert(message);
             }
         });
     </script>

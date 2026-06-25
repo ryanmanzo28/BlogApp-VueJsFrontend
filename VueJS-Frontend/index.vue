@@ -1,5 +1,6 @@
 <template>
     <main>
+        <a class="corner-login" href="/login">Login</a>
         <header>
             <h1>Home</h1>
             <p>Welcome {{ this.username }}</p>
@@ -20,7 +21,7 @@
 </template>
 
 <script>
-import { getAllPosts, getCurrentUser } from "./api.js";
+import { getAllPosts } from "./api.js";
 
 export default {
     name: "HomePage",
@@ -33,27 +34,21 @@ export default {
         };
     },
     async mounted() {
-        const token = localStorage.getItem("auth_token") || "";
-        if (!token) {
+        if (window.location.pathname !== "/") {
             window.location.href = "/login";
             return;
         }
 
+        const email = localStorage.getItem("auth_email") || "";
+        if (email.includes("@")) {
+            this.username = email.split("@")[0];
+        } else {
+            this.username = "Guest";
+        }
+
         try {
-            const user = await getCurrentUser();
-            const email = user?.email || localStorage.getItem("auth_email") || "";
-
-            if (email.includes("@")) {
-                this.username = email.split("@")[0];
-            }
-
             this.posts = await getAllPosts();
         } catch (err) {
-            if (err instanceof Error && err.message === "Unauthorized") {
-                window.location.href = "/login";
-                return;
-            }
-
             this.error = err instanceof Error ? err.message : "Failed to load posts.";
         } finally {
             this.loading = false;
@@ -61,4 +56,19 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+.corner-login {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    font-weight: 700;
+}
+</style>
 
