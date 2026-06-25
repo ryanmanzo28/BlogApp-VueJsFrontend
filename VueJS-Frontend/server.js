@@ -1,0 +1,70 @@
+import express from "express";
+import dotenv from "dotenv";
+import mysql from "mysql2/promise";
+import jwt from "jsonwebtoken";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../Blog-App-Backend/.env") });
+
+const app = express();
+app.use(express.json());
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT || 3307),
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "password",
+    database: process.env.DB_NAME || "app",
+    waitForConnections: true,
+    connectionLimit: 10,
+});
+
+app.get("/api/db-health", async (_req, res) => {
+    try {
+        await pool.query("SELECT 1");
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ ok: false, error: "Database connection failed" });
+    }
+});
+
+app.post("/api/login", async (req, res) => {
+    const { email, password } = req.body ?? {};
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "email and password are required" });
+    }
+
+    try {
+        const [rows] = await pool.query(
+            "SELECT id, email, password FROM users WHERE email = ? LIMIT 1",
+            [email],
+        );
+
+        const user = Array.isArray(rows) ? rows[0] : null;
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: "invalid credentials" });
+        }
+
+        const token = jwt.sign(
+            { sub: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: "15m" },
+        );
+
+        return res.json({ token });
+    } catch (_error) {
+        return res.status(500).json({ error: "login failed" });
+    }
+});
+
+const port = Number(process.env.SERVER_PORT || 3000);
+app.listen(port, () => {
+    console.log(`Server listening on http://localhost:${port}`);
+});

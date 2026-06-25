@@ -1,14 +1,8 @@
-export async function getAllPosts() {
-const API_BASE = "http://localhost:8081";
-const res = await fetch(API_BASE + "/posts",{
-    method: "GET",
-    headers: {Accept: "application/json"},
+import { createApp } from "vue";
+import FeedPage from "./index.vue";
 
-});
-if (!res.ok) {
-    throw new Error("Request Failed" + res.status)
+createApp(FeedPage).mount("#app");
 
-}
-const data = await res.json();
-return data.posts;
-}
+
+
+
