@@ -97,6 +97,7 @@ app.get("/api/posts", async (_req, res) => {
 });
 
 const distPath = path.resolve(__dirname, "dist");
+const assetsPath = path.resolve(__dirname, "assets");
 const loginPagePath = path.resolve(__dirname, "login.html");
 
 app.get("/login", (_req, res) => {
@@ -106,6 +107,7 @@ app.get("/login.html", (_req, res) => {
     res.sendFile(loginPagePath);
 });
 
+app.use("/assets", express.static(assetsPath));
 app.use(express.static(distPath));
 app.use((_req, res) => {
     res.sendFile(path.join(distPath, "index.html"));

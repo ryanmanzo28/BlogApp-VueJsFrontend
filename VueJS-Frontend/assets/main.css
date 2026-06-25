@@ -1,31 +1,93 @@
 body {
-    background-color: #c3c9f0;
+    background: linear-gradient(180deg, #dfe4fb 0%, #c6cff3 100%);
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 16px;
-}
-button {
-    background-color: #98b7ff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-#login-form {
-    max-width: 400px;
-    margin: 0 auto;
+    min-height: 100vh;
     padding: 20px;
-    background-color: #c1cdf7;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-main {
-    max-width: 720px;
-    margin: 0 auto;
+body > * {
+    width: 100%;
 }
 
-article {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+.login-shell {
+    display: flex;
+    justify-content: center;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    box-sizing: border-box;
+    background: rgba(247, 249, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    box-shadow: 0 12px 34px rgba(53, 68, 116, 0.14);
+    padding: 28px;
+}
+
+.login-card h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    color: #222b45;
+}
+
+.login-card p {
+    margin: 0 0 20px;
+    color: #59607a;
+}
+
+body > form {
+    max-width: 420px;
+}
+
+form {
+    display: grid;
+    gap: 10px;
+}
+
+label {
+    margin: 10px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3553;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #c0c8ea;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+}
+
+input:focus {
+    outline: none;
+    border-color: #7488da;
+    box-shadow: 0 0 0 3px rgba(116, 136, 218, 0.16);
+}
+
+button {
+    width: 100%;
+    margin-top: 8px;
+    background: linear-gradient(180deg, #7389dc 0%, #5d74c6 100%);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+button:hover {
+    filter: brightness(1.03);
+}
+
+button:active {
+    transform: translateY(1px);
 }
