@@ -17,13 +17,42 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const BACKEND_API_BASE = process.env.BACKEND_API_BASE || "http://backend";
+const BCRYPT_ROUNDS = 10;
+
+function getBearerToken(req) {
+    const authHeader = req.headers.authorization || "";
+    if (!authHeader.startsWith("Bearer ")) {
+        return "";
+    }
+
+    return authHeader.slice("Bearer ".length).trim();
+}
+
+function requireAuth(req, res, next) {
+    const token = getBearerToken(req);
+    if (!token) {
+        return res.status(401).json({ error: "missing token" });
+    }
+
+    try {
+        const payload = jwt.verify(token, JWT_SECRET);
+        req.user = payload;
+        return next();
+    } catch (_error) {
+        return res.status(401).json({ error: "invalid token" });
+    }
+}
+
+function isBcryptHash(value) {
+    return typeof value === "string" && value.startsWith("$2");
+}
 
 function verifyPassword(plainPassword, storedPassword) {
     if (typeof storedPassword !== "string") {
         return false;
     }
 
-    if (storedPassword.startsWith("$2")) {
+    if (isBcryptHash(storedPassword)) {
         return bcrypt.compareSync(plainPassword, storedPassword);
     }
 
@@ -67,6 +96,14 @@ app.post("/api/login", async (req, res) => {
             return res.status(401).json({ error: "invalid credentials" });
         }
 
+        // If a legacy plaintext password exists, upgrade it to bcrypt at login.
+        if (!isBcryptHash(user.password)) {
+            const upgradedPassword = bcrypt.hashSync(password, BCRYPT_ROUNDS);
+            await pool.query("UPDATE users SET password = ? WHERE id = ?", [upgradedPassword, user.id]);
+        }
+
+        await pool.query("UPDATE users SET modified = NOW() WHERE id = ?", [user.id]);
+
         const token = jwt.sign(
             { sub: user.id, email: user.email },
             JWT_SECRET,
@@ -87,7 +124,7 @@ app.post("/api/signup", async (req, res) => {
     }
 
     try {
-        const hashedPassword = bcrypt.hashSync(password, 10);
+        const hashedPassword = bcrypt.hashSync(password, BCRYPT_ROUNDS);
         const [result] = await pool.query(
             "INSERT INTO users (email, password, role) VALUES (?, ?, 'user')",
             [email, hashedPassword],
@@ -105,7 +142,30 @@ app.post("/api/signup", async (req, res) => {
     }
 });
 
-app.get("/api/posts", async (_req, res) => {
+app.get("/api/me", requireAuth, async (req, res) => {
+    const userId = Number(req.user?.sub || 0);
+    if (!userId) {
+        return res.status(401).json({ error: "invalid token" });
+    }
+
+    try {
+        const [rows] = await pool.query(
+            "SELECT id, email, role FROM users WHERE id = ? LIMIT 1",
+            [userId],
+        );
+
+        const user = Array.isArray(rows) ? rows[0] : null;
+        if (!user) {
+            return res.status(401).json({ error: "invalid token" });
+        }
+
+        return res.json({ user });
+    } catch (_error) {
+        return res.status(500).json({ error: "failed to load session" });
+    }
+});
+
+app.get("/api/posts", requireAuth, async (_req, res) => {
     try {
         const response = await fetch(`${BACKEND_API_BASE}/posts`, {
             headers: { Accept: "application/json" },

@@ -10,6 +10,10 @@ export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
+export function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 export async function loginAndStoreToken(email, password) {
   const response = await fetch(`${AUTH_API_BASE}/api/login`, {
     method: "POST",
@@ -47,10 +51,35 @@ async function apiFetch(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
+export async function getCurrentUser() {
+  const response = await apiFetch(`${AUTH_API_BASE}/api/me`, {
+    method: "GET",
+  });
+
+  if (response.status === 401) {
+    clearToken();
+    localStorage.removeItem("auth_email");
+    throw new Error("Unauthorized");
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.user || null;
+}
+
 export async function getAllPosts() {
   const response = await apiFetch(`${CONTENT_API_BASE}/api/posts`, {
     method: "GET",
   });
+
+  if (response.status === 401) {
+    clearToken();
+    localStorage.removeItem("auth_email");
+    throw new Error("Unauthorized");
+  }
 
   if (!response.ok) {
     throw new Error(`Request failed ${response.status}`);

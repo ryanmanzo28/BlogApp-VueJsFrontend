@@ -20,13 +20,7 @@
 </template>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    if (!localStorage.getItem("auth_token")) {
-        alert("You are not logged in. Please log in to access the home page.");
-        window.location.href = "/login";
-    }
-})
-import { getAllPosts } from "./api.js";
+import { getAllPosts, getCurrentUser } from "./api.js";
 
 export default {
     name: "HomePage",
@@ -39,14 +33,27 @@ export default {
         };
     },
     async mounted() {
-        const email = localStorage.getItem("auth_email") || "";
-        if (email.includes("@")) {
-            this.username = email.split("@")[0];
+        const token = localStorage.getItem("auth_token") || "";
+        if (!token) {
+            window.location.href = "/login";
+            return;
         }
 
         try {
+            const user = await getCurrentUser();
+            const email = user?.email || localStorage.getItem("auth_email") || "";
+
+            if (email.includes("@")) {
+                this.username = email.split("@")[0];
+            }
+
             this.posts = await getAllPosts();
         } catch (err) {
+            if (err instanceof Error && err.message === "Unauthorized") {
+                window.location.href = "/login";
+                return;
+            }
+
             this.error = err instanceof Error ? err.message : "Failed to load posts.";
         } finally {
             this.loading = false;
