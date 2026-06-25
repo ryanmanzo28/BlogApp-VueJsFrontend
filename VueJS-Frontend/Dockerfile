@@ -32,6 +32,7 @@ COPY VueJS-Frontend/server.js .
 COPY VueJS-Frontend/main.js .
 COPY VueJS-Frontend/index.vue .
 COPY VueJS-Frontend/login.html .
+COPY VueJS-Frontend/signup.html .
 
 # Expose port
 EXPOSE 3000

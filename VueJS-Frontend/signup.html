@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="stylesheet" href="/assets/main.css?v=3" />
+    <title>Signup</title>
+    <link rel="stylesheet" href="/assets/main.css" />
 </head>
 <body>
     <main class="login-shell">
         <section class="login-card">
-            <h1>Welcome back</h1>
-            <p>Sign in to continue to your feed.</p>
+            <h1>Create account</h1>
+            <p>Make a new account to continue.</p>
 
-            <form id="loginForm">
+            <form id="accountCreateForm">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required />
 
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required />
 
-                <button type="submit">Login</button>
+                <button type="submit">Signup</button>
             </form>
-            <p class="signup-link">Don't have an account? <a href="/signup">Sign up</a></p>
+            <p class="signup-link">Already have an account? <a href="/login">Log in</a></p>
         </section>
     </main>
 
     <script>
-        document.getElementById("loginForm").addEventListener("submit", async (event) => {
+        document.getElementById("accountCreateForm").addEventListener("submit", async (event) => {
             event.preventDefault();
 
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
             try {
-                const response = await fetch("/api/login", {
+                const response = await fetch("/api/signup", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -42,7 +42,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Login failed");
+                    throw new Error("Signup failed");
                 }
 
                 const data = await response.json();
@@ -51,7 +51,7 @@
                 window.location.href = "/";
             } catch (error) {
                 console.error("Error:", error);
-                alert("Login failed. Please check your credentials and try again.");
+                alert("Signup failed. Please check your credentials and try again.");
             }
         });
     </script>

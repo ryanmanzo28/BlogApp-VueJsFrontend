@@ -79,6 +79,32 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+app.post("/api/signup", async (req, res) => {
+    const { email, password } = req.body ?? {};
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "email and password are required" });
+    }
+
+    try {
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        const [result] = await pool.query(
+            "INSERT INTO users (email, password, role) VALUES (?, ?, 'user')",
+            [email, hashedPassword],
+        );
+
+        const token = jwt.sign(
+            { sub: result.insertId, email },
+            JWT_SECRET,
+            { expiresIn: "15m" },
+        );
+
+        return res.status(201).json({ token });
+    } catch (_error) {
+        return res.status(500).json({ error: "signup failed" });
+    }
+});
+
 app.get("/api/posts", async (_req, res) => {
     try {
         const response = await fetch(`${BACKEND_API_BASE}/posts`, {
@@ -99,12 +125,19 @@ app.get("/api/posts", async (_req, res) => {
 const distPath = path.resolve(__dirname, "dist");
 const assetsPath = path.resolve(__dirname, "assets");
 const loginPagePath = path.resolve(__dirname, "login.html");
+const signupPagePath = path.resolve(__dirname, "signup.html");
 
 app.get("/login", (_req, res) => {
     res.sendFile(loginPagePath);
 });
 app.get("/login.html", (_req, res) => {
     res.sendFile(loginPagePath);
+});
+app.get("/signup", (_req, res) => {
+    res.sendFile(signupPagePath);
+});
+app.get("/signup.html", (_req, res) => {
+    res.sendFile(signupPagePath);
 });
 
 app.use("/assets", express.static(assetsPath));
