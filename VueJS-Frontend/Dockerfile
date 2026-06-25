@@ -35,6 +35,9 @@ COPY VueJS-Frontend/assets ./assets
 COPY VueJS-Frontend/login.html .
 COPY VueJS-Frontend/signup.html .
 COPY VueJS-Frontend/logout.html .
+COPY VueJS-Frontend/write.html .
+COPY VueJS-Frontend/article.html .
+COPY VueJS-Frontend/profile.html .
 
 # Expose port
 EXPOSE 3000

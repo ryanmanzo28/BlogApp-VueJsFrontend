@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
+docker compose down 
 cd "$SCRIPT_DIR/VueJS-Frontend"
 npm install
 npm run build

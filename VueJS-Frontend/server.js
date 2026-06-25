@@ -202,6 +202,9 @@ const assetsPath = path.resolve(__dirname, "assets");
 const loginPagePath = path.resolve(__dirname, "login.html");
 const logoutPagePath = path.resolve(__dirname, "logout.html");
 const signupPagePath = path.resolve(__dirname, "signup.html");
+const writePagePath = path.resolve(__dirname, "write.html");
+const articlePagePath = path.resolve(__dirname, "article.html");
+const profilePagePath = path.resolve(__dirname, "profile.html");
 
 app.get("/login", (_req, res) => {
     res.sendFile(loginPagePath);
@@ -220,6 +223,15 @@ app.get("/signup", (_req, res) => {
 });
 app.get("/signup.html", (_req, res) => {
     res.sendFile(signupPagePath);
+});
+app.get("/write.html", (_req, res) => {
+    res.sendFile(writePagePath);
+});
+app.get("/article.html", (_req, res) => {
+    res.sendFile(articlePagePath);
+});
+app.get("/profile.html", (_req, res) => {
+    res.sendFile(profilePagePath);
 });
 
 app.use("/assets", express.static(assetsPath));

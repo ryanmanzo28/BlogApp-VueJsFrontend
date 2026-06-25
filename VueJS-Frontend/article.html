@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Article</title>
+    <link rel="stylesheet" href="/assets/main.css" />
+    <style>
+        .article-shell {
+            width: min(860px, 100%);
+        }
+
+        .article-view {
+            background: rgba(247, 249, 255, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            box-shadow: 0 12px 34px rgba(53, 68, 116, 0.14);
+            padding: 28px;
+        }
+
+        .article-view__back {
+            margin: 0 0 14px;
+        }
+
+        .article-view__back-link {
+            color: #5d74c6;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .article-view__title {
+            margin: 0 0 10px;
+            font-size: 40px;
+            line-height: 1.05;
+            color: #1f2a44;
+        }
+
+        .article-view__meta {
+            margin: 0 0 12px;
+            color: #6a7491;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .article-view__body {
+            color: #44506f;
+            font-size: 18px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <main class="article-shell">
+        <section class="article-view">
+            <p class="article-view__back">
+                <a class="article-view__back-link" href="/">Back to feed</a>
+            </p>
+            <p id="articleMeta" class="article-view__meta"></p>
+            <h1 id="articleTitle" class="article-view__title">Loading...</h1>
+            <div id="articleBody" class="article-view__body"></div>
+        </section>
+    </main>
+
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        const articleId = Number(params.get("id") || 0);
+        const titleEl = document.getElementById("articleTitle");
+        const bodyEl = document.getElementById("articleBody");
+        const metaEl = document.getElementById("articleMeta");
+
+        async function loadArticle() {
+            try {
+                const response = await fetch("/api/posts", {
+                    headers: { Accept: "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load article ${response.status}`);
+                }
+
+                const data = await response.json();
+                const article = Array.isArray(data.posts)
+                    ? data.posts.find((post) => Number(post.id) === articleId)
+                    : null;
+
+                if (!article) {
+                    titleEl.textContent = "Article not found";
+                    bodyEl.textContent = "The article you selected could not be loaded.";
+                    metaEl.textContent = "";
+                    return;
+                }
+
+                document.title = article.title || "Article";
+                titleEl.textContent = article.title || "Untitled";
+                metaEl.textContent = `Post #${article.id}`;
+                bodyEl.textContent = article.body || "";
+            } catch (_error) {
+                titleEl.textContent = "Article unavailable";
+                bodyEl.textContent = "There was a problem loading this article.";
+                metaEl.textContent = "";
+            }
+        }
+
+        loadArticle();
+    </script>
+</body>
+</html>
