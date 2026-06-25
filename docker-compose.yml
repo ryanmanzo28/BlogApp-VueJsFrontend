@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./VueJS-Frontend/Dockerfile
     ports:
-      - "${FRONTEND_PORT:-5173}:3000"
+      - "${FRONTEND_PORT:-8765}:3000"
     environment:
       NODE_ENV: development
       DB_HOST: db

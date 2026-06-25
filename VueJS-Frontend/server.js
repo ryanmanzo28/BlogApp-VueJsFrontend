@@ -78,6 +78,12 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+const distPath = path.resolve(__dirname, "dist");
+app.use(express.static(distPath));
+app.use((_req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+});
+
 const port = Number(process.env.SERVER_PORT || 3000);
 app.listen(port, () => {
     console.log(`Server listening on http://localhost:${port}`);
