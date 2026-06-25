@@ -1,31 +1,36 @@
 <template>
-    <div>
-        <h1>Feed</h1>
-        <p v-if="loading">Loading...</p>
-        <p v-else-if="error">{{ error }}</p>
-        <div v-else v-for="post in posts" :key="post.id">{{ post.title }}</div>
-    </div>
+    <main>
+        <header>
+            <h1>Home</h1>
+            <p>Welcome {{ username }}</p>
+        </header>
+
+        <section>
+            <h2>Feed</h2>
+            <article>
+                <h3>Post title</h3>
+                <p>Post body preview...</p>
+            </article>
+            <article>
+                <h3>Post title</h3>
+                <p>Post body preview...</p>
+            </article>
+        </section>
+    </main>
 </template>
 
 <script>
-import { getAllPosts } from "./api.js";
-
 export default {
-    name: "FeedPage",
+    name: "HomePage",
     data() {
         return {
-            posts: [],
-            loading: true,
-            error: "",
+            username: "username",
         };
     },
-    async mounted() {
-        try {
-            this.posts = await getAllPosts();
-        } catch (err) {
-            this.error = err instanceof Error ? err.message : "Failed to load posts.";
-        } finally {
-            this.loading = false;
+    mounted() {
+        const email = localStorage.getItem("auth_email") || "";
+        if (email.includes("@")) {
+            this.username = email.split("@")[0];
         }
     },
 };
