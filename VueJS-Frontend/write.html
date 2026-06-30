@@ -6,21 +6,43 @@
     <title>Write</title>
     <link rel="stylesheet" href="/assets/main.css" />
     <style>
+        :root {
+            --write-ink: #1f2a44;
+            --write-muted: #59607a;
+            --write-accent: #5d74c6;
+            --write-border: #c0c8ea;
+            --write-surface: rgba(247, 249, 255, 0.96);
+        }
+
         .write-shell {
-            width: min(820px, 100%);
+            width: min(1120px, 100%);
         }
 
         .write-card {
-            background: rgba(247, 249, 255, 0.96);
+            background: var(--write-surface);
             border: 1px solid rgba(0, 0, 0, 0.06);
             border-radius: 16px;
             box-shadow: 0 12px 34px rgba(53, 68, 116, 0.14);
             padding: 28px;
         }
 
+        .write-hero {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(45, 53, 83, 0.1);
+        }
+
+        .write-hero__copy {
+            max-width: 640px;
+        }
+
         .write-eyebrow {
             margin: 0 0 8px;
-            color: #5d74c6;
+            color: var(--write-accent);
             font-size: 12px;
             font-weight: 800;
             letter-spacing: 0.14em;
@@ -30,17 +52,46 @@
         .write-card h1 {
             margin: 0 0 8px;
             font-size: 34px;
-            color: #1f2a44;
+            color: var(--write-ink);
         }
 
-        .write-card p {
-            margin: 0 0 20px;
-            color: #59607a;
+        .write-lead {
+            margin: 0;
+            color: var(--write-muted);
+            line-height: 1.6;
+        }
+
+        .write-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .write-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(93, 116, 198, 0.18);
+            background: rgba(93, 116, 198, 0.08);
+            color: var(--write-ink);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .write-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+            gap: 18px;
+            align-items: start;
         }
 
         .write-form {
             display: grid;
             gap: 10px;
+            padding-right: 6px;
         }
 
         .write-form input,
@@ -48,7 +99,7 @@
             width: 100%;
             box-sizing: border-box;
             padding: 12px 14px;
-            border: 1px solid #c0c8ea;
+            border: 1px solid var(--write-border);
             border-radius: 10px;
             background: #fff;
             font: inherit;
@@ -67,11 +118,24 @@
             box-shadow: 0 0 0 3px rgba(116, 136, 218, 0.16);
         }
 
+        .write-form label {
+            color: var(--write-ink);
+            font-weight: 700;
+        }
+
+        .write-helper {
+            margin: -4px 0 0;
+            color: var(--write-muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
         .write-actions {
             display: flex;
             gap: 12px;
             align-items: center;
             margin-top: 4px;
+            flex-wrap: wrap;
         }
 
         .write-actions button {
@@ -89,9 +153,87 @@
         .write-status {
             min-height: 1.25em;
             margin: 10px 0 0;
-            color: #59607a;
+            color: var(--write-muted);
             font-size: 14px;
             font-weight: 600;
+        }
+
+        .editor-panel,
+        .preview-panel {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(45, 53, 83, 0.08);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .preview-panel {
+            position: sticky;
+            top: 18px;
+        }
+
+        .preview-panel h2 {
+            margin: 0 0 10px;
+            color: var(--write-ink);
+            font-size: 18px;
+        }
+
+        .preview-label {
+            margin: 0 0 6px;
+            color: var(--write-muted);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .preview-title {
+            margin: 0 0 10px;
+            color: var(--write-ink);
+            font-size: 24px;
+            line-height: 1.15;
+        }
+
+        .preview-body {
+            white-space: pre-wrap;
+            color: #44506f;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .preview-empty {
+            color: var(--write-muted);
+            font-style: italic;
+        }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .preview-stat {
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(93, 116, 198, 0.08);
+            border: 1px solid rgba(93, 116, 198, 0.14);
+        }
+
+        .preview-stat span {
+            display: block;
+        }
+
+        .preview-stat__value {
+            color: var(--write-ink);
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .preview-stat__label {
+            margin-top: 4px;
+            color: var(--write-muted);
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .write-toast {
@@ -132,23 +274,55 @@
 
     <main class="write-shell">
         <section class="write-card">
-            <p class="write-eyebrow">HydraCor write</p>
-            <h1>Write post</h1>
-            <p>Basic draft screen for testing layout.</p>
-
-            <form class="write-form" id="writeForm">
-                <label for="title">Title</label>
-                <input type="text" id="title" name="title" placeholder="Give it a title" required />
-
-                <label for="body">Body</label>
-                <textarea id="body" name="body" placeholder="Write something here..." required></textarea>
-
-                <div class="write-actions">
-                    <button type="submit" id="publishButton">Publish</button>
-                    <a class="write-link" href="/">Back to feed</a>
+            <div class="write-hero">
+                <div class="write-hero__copy">
+                    <p class="write-eyebrow">HydraCor write</p>
+                    <h1>Compose a new post</h1>
+                    <p class="write-lead">Draft, preview, and publish from one screen. Your draft is saved locally as you type.</p>
                 </div>
-                <p class="write-status" id="writeStatus" aria-live="polite"></p>
-            </form>
+                <div class="write-meta">
+                    <span class="write-chip" id="wordCountChip">0 words</span>
+                    <span class="write-chip" id="draftStateChip">Draft not saved</span>
+                </div>
+            </div>
+
+            <div class="write-grid">
+                <section class="editor-panel">
+                    <form class="write-form" id="writeForm">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Give it a title" required maxlength="120" />
+                        <p class="write-helper">Keep it short and specific. The title appears first in the feed and article view.</p>
+
+                        <label for="body">Body</label>
+                        <textarea id="body" name="body" placeholder="Write something here..." required maxlength="12000"></textarea>
+                        <p class="write-helper">Use line breaks freely. Markdown is not required, but plain text spacing helps readability.</p>
+
+                        <div class="write-actions">
+                            <button type="submit" id="publishButton">Publish</button>
+                            <button type="button" id="saveDraftButton">Save draft</button>
+                            <button type="button" id="clearDraftButton">Clear draft</button>
+                            <a class="write-link" href="/">Back to feed</a>
+                        </div>
+                        <p class="write-status" id="writeStatus" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <aside class="preview-panel" aria-label="Live preview">
+                    <p class="preview-label">Live preview</p>
+                    <h2 id="previewTitle" class="preview-title preview-empty">Your title will appear here</h2>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <span class="preview-stat__value" id="previewWordCount">0</span>
+                            <span class="preview-stat__label">Words</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span class="preview-stat__value" id="previewReadTime">0 min</span>
+                            <span class="preview-stat__label">Read time</span>
+                        </div>
+                    </div>
+                    <p id="previewBody" class="preview-body preview-empty">Start writing to see a live preview of your post.</p>
+                </aside>
+            </div>
         </section>
     </main>
 
@@ -159,11 +333,23 @@
             window.location.replace("/login");
         }
 
+        const DRAFT_KEY = "write_draft_v1";
         const form = document.getElementById("writeForm");
         const publishButton = document.getElementById("publishButton");
+        const saveDraftButton = document.getElementById("saveDraftButton");
+        const clearDraftButton = document.getElementById("clearDraftButton");
         const statusEl = document.getElementById("writeStatus");
         const toastEl = document.getElementById("writeToast");
+        const titleInput = document.getElementById("title");
+        const bodyInput = document.getElementById("body");
+        const previewTitleEl = document.getElementById("previewTitle");
+        const previewBodyEl = document.getElementById("previewBody");
+        const wordCountChip = document.getElementById("wordCountChip");
+        const draftStateChip = document.getElementById("draftStateChip");
+        const previewWordCountEl = document.getElementById("previewWordCount");
+        const previewReadTimeEl = document.getElementById("previewReadTime");
         let toastTimer = null;
+        let draftTimer = null;
 
         function showToast(message) {
             toastEl.textContent = message;
@@ -179,11 +365,110 @@
             }, 2200);
         }
 
+        function getDraft() {
+            try {
+                const rawDraft = localStorage.getItem(DRAFT_KEY);
+                return rawDraft ? JSON.parse(rawDraft) : null;
+            } catch (_error) {
+                return null;
+            }
+        }
+
+        function saveDraft(statusMessage = "Draft saved locally.") {
+            const draft = {
+                title: titleInput.value,
+                body: bodyInput.value,
+                savedAt: new Date().toISOString(),
+            };
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            draftStateChip.textContent = "Draft saved";
+            statusEl.textContent = statusMessage;
+        }
+
+        function clearDraft() {
+            localStorage.removeItem(DRAFT_KEY);
+            draftStateChip.textContent = "Draft not saved";
+            statusEl.textContent = "Draft cleared.";
+        }
+
+        function getWordCount(text) {
+            const trimmed = String(text || "").trim();
+            if (!trimmed) {
+                return 0;
+            }
+
+            return trimmed.split(/\s+/).length;
+        }
+
+        function updatePreview() {
+            const title = titleInput.value.trim();
+            const body = bodyInput.value.trim();
+            const words = getWordCount(`${title} ${body}`);
+            const bodyWords = getWordCount(body);
+            const readMinutes = Math.max(1, Math.ceil(bodyWords / 200));
+
+            wordCountChip.textContent = `${words} words`;
+            previewWordCountEl.textContent = String(words);
+            previewReadTimeEl.textContent = bodyWords === 0 ? "0 min" : `${readMinutes} min`;
+
+            if (title) {
+                previewTitleEl.textContent = title;
+                previewTitleEl.classList.remove("preview-empty");
+            } else {
+                previewTitleEl.textContent = "Your title will appear here";
+                previewTitleEl.classList.add("preview-empty");
+            }
+
+            if (body) {
+                previewBodyEl.textContent = body;
+                previewBodyEl.classList.remove("preview-empty");
+            } else {
+                previewBodyEl.textContent = "Start writing to see a live preview of your post.";
+                previewBodyEl.classList.add("preview-empty");
+            }
+
+            if (draftTimer) {
+                window.clearTimeout(draftTimer);
+            }
+
+            draftTimer = window.setTimeout(() => saveDraft("Draft saved locally."), 350);
+        }
+
+        const draft = getDraft();
+        if (draft) {
+            titleInput.value = draft.title || "";
+            bodyInput.value = draft.body || "";
+            draftStateChip.textContent = "Draft restored";
+            statusEl.textContent = "Draft restored from this browser.";
+        }
+
+        updatePreview();
+
+        titleInput.addEventListener("input", updatePreview);
+        bodyInput.addEventListener("input", updatePreview);
+
+        saveDraftButton.addEventListener("click", () => saveDraft("Draft saved locally."));
+
+        clearDraftButton.addEventListener("click", () => {
+            titleInput.value = "";
+            bodyInput.value = "";
+            clearDraft();
+            updatePreview();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+                event.preventDefault();
+                saveDraft("Draft saved locally.");
+            }
+        });
+
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const title = document.getElementById("title").value.trim();
-            const body = document.getElementById("body").value.trim();
+            const title = titleInput.value.trim();
+            const body = bodyInput.value.trim();
 
             if (!title || !body) {
                 statusEl.textContent = "Title and body are required.";
@@ -223,6 +508,8 @@
 
                 statusEl.textContent = "Published.";
                 showToast("Post published successfully.");
+                localStorage.removeItem(DRAFT_KEY);
+                draftStateChip.textContent = "Draft cleared";
                 if (articleId) {
                     window.setTimeout(() => {
                         window.location.href = `/article.html?id=${articleId}`;
