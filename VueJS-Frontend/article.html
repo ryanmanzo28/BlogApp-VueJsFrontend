@@ -50,6 +50,68 @@
             line-height: 1.7;
             white-space: pre-wrap;
         }
+
+        .article-view__actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 16px 0 10px;
+        }
+
+        .article-view__actions button {
+            width: auto;
+            margin: 0;
+            padding: 10px 14px;
+            border-radius: 9px;
+        }
+
+        .article-edit {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(45, 53, 83, 0.12);
+            display: none;
+            gap: 10px;
+        }
+
+        .article-edit.is-visible {
+            display: grid;
+        }
+
+        .article-edit label {
+            color: #1f2a44;
+            font-weight: 700;
+        }
+
+        .article-edit input,
+        .article-edit textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 13px;
+            border: 1px solid #c0c8ea;
+            border-radius: 10px;
+            font: inherit;
+            background: #ffffff;
+        }
+
+        .article-edit textarea {
+            min-height: 160px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .article-edit__actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .article-edit__status {
+            min-height: 1.25em;
+            margin: 2px 0 0;
+            color: #59607a;
+            font-weight: 600;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -61,15 +123,120 @@
             <p id="articleMeta" class="article-view__meta"></p>
             <h1 id="articleTitle" class="article-view__title">Loading...</h1>
             <div id="articleBody" class="article-view__body"></div>
+            <div id="articleActions" class="article-view__actions"></div>
+
+            <form id="articleEditForm" class="article-edit">
+                <label for="editTitle">Edit title</label>
+                <input id="editTitle" name="title" type="text" required maxlength="120" />
+
+                <label for="editBody">Edit body</label>
+                <textarea id="editBody" name="body" required maxlength="12000"></textarea>
+
+                <div class="article-edit__actions">
+                    <button type="submit" id="saveEditButton">Save changes</button>
+                    <button type="button" id="cancelEditButton">Cancel</button>
+                </div>
+                <p id="editStatus" class="article-edit__status" aria-live="polite"></p>
+            </form>
         </section>
     </main>
 
     <script type="module">
         const params = new URLSearchParams(window.location.search);
         const articleId = Number(params.get("id") || 0);
+        const token = localStorage.getItem("auth_token") || "";
         const titleEl = document.getElementById("articleTitle");
         const bodyEl = document.getElementById("articleBody");
         const metaEl = document.getElementById("articleMeta");
+        const actionsEl = document.getElementById("articleActions");
+        const editFormEl = document.getElementById("articleEditForm");
+        const editTitleEl = document.getElementById("editTitle");
+        const editBodyEl = document.getElementById("editBody");
+        const saveEditButtonEl = document.getElementById("saveEditButton");
+        const cancelEditButtonEl = document.getElementById("cancelEditButton");
+        const editStatusEl = document.getElementById("editStatus");
+
+        let currentUser = null;
+        let currentArticle = null;
+        let currentPostsCount = 0;
+        let currentArticleIndex = -1;
+
+        function setArticleDisplay(article) {
+            if (!article) {
+                return;
+            }
+
+            document.title = article.title || "Article";
+            titleEl.textContent = article.title || "Untitled";
+            if (currentArticleIndex >= 0) {
+                metaEl.textContent = `Post #${currentArticleIndex + 1} of ${currentPostsCount}`;
+            } else {
+                metaEl.textContent = "Post";
+            }
+            bodyEl.textContent = article.body || "";
+        }
+
+        async function loadCurrentUser() {
+            if (!token) {
+                currentUser = null;
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/me", {
+                    headers: {
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    currentUser = null;
+                    return;
+                }
+
+                const data = await response.json();
+                currentUser = data.user || null;
+            } catch (_error) {
+                currentUser = null;
+            }
+        }
+
+        function hideEditForm() {
+            editFormEl.classList.remove("is-visible");
+            editStatusEl.textContent = "";
+        }
+
+        function showEditForm() {
+            if (!currentArticle) {
+                return;
+            }
+
+            editTitleEl.value = currentArticle.title || "";
+            editBodyEl.value = currentArticle.body || "";
+            editFormEl.classList.add("is-visible");
+            editStatusEl.textContent = "";
+            editTitleEl.focus();
+        }
+
+        function renderActions() {
+            actionsEl.innerHTML = "";
+            hideEditForm();
+
+            if (!currentArticle || !currentUser) {
+                return;
+            }
+
+            if (Number(currentArticle.user_id) !== Number(currentUser.id)) {
+                return;
+            }
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.textContent = "Edit post";
+            editButton.addEventListener("click", showEditForm);
+            actionsEl.appendChild(editButton);
+        }
 
         async function loadArticle() {
             try {
@@ -83,28 +250,94 @@
 
                 const data = await response.json();
                 const posts = Array.isArray(data.posts) ? data.posts : [];
-                const articleIndex = posts.findIndex((post) => Number(post.id) === articleId);
-                const article = articleIndex >= 0 ? posts[articleIndex] : null;
+                currentArticleIndex = posts.findIndex((post) => Number(post.id) === articleId);
+                currentPostsCount = posts.length;
+                const article = currentArticleIndex >= 0 ? posts[currentArticleIndex] : null;
 
                 if (!article) {
                     titleEl.textContent = "Article not found";
                     bodyEl.textContent = "The article you selected could not be loaded.";
                     metaEl.textContent = "";
+                    renderActions();
                     return;
                 }
 
-                document.title = article.title || "Article";
-                titleEl.textContent = article.title || "Untitled";
-                metaEl.textContent = `Post #${articleIndex + 1} of ${posts.length}`;
-                bodyEl.textContent = article.body || "";
+                currentArticle = article;
+                setArticleDisplay(article);
+                renderActions();
             } catch (_error) {
                 titleEl.textContent = "Article unavailable";
                 bodyEl.textContent = "There was a problem loading this article.";
                 metaEl.textContent = "";
+                renderActions();
             }
         }
 
-        loadArticle();
+        editFormEl.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!currentArticle) {
+                return;
+            }
+
+            const nextTitle = editTitleEl.value.trim();
+            const nextBody = editBodyEl.value.trim();
+
+            if (!nextTitle || !nextBody) {
+                editStatusEl.textContent = "Title and body are required.";
+                return;
+            }
+
+            saveEditButtonEl.disabled = true;
+            editStatusEl.textContent = "Saving...";
+
+            try {
+                const response = await fetch(`/api/posts/${Number(currentArticle.id)}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ title: nextTitle, body: nextBody }),
+                });
+
+                if (!response.ok) {
+                    let message = `Update failed ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData && typeof errorData.error === "string" && errorData.error) {
+                            message = errorData.error;
+                        }
+                    } catch (_error) {
+                        // Keep the default message.
+                    }
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+                currentArticle = data.article || {
+                    ...currentArticle,
+                    title: nextTitle,
+                    body: nextBody,
+                };
+
+                setArticleDisplay(currentArticle);
+                editStatusEl.textContent = "Saved.";
+                window.setTimeout(() => {
+                    hideEditForm();
+                }, 550);
+            } catch (error) {
+                editStatusEl.textContent = error instanceof Error ? error.message : "Update failed.";
+            } finally {
+                saveEditButtonEl.disabled = false;
+            }
+        });
+
+        cancelEditButtonEl.addEventListener("click", hideEditForm);
+
+        await loadCurrentUser();
+        await loadArticle();
     </script>
 </body>
 </html>
