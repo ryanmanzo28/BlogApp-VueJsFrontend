@@ -66,11 +66,6 @@ export default {
         };
     },
     async mounted() {
-        if (window.location.pathname !== "/") {
-            window.location.href = "/login";
-            return;
-        }
-
         this.isLoggedIn = !!localStorage.getItem("auth_token");
 
         const email = localStorage.getItem("auth_email") || "";
