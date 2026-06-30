@@ -94,6 +94,28 @@
             font-weight: 600;
         }
 
+        .write-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 20;
+            max-width: min(360px, calc(100vw - 40px));
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #1f2a44;
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(31, 42, 68, 0.22);
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity 160ms ease, transform 160ms ease;
+        }
+
+        .write-toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .write-link {
             color: #5d74c6;
             text-decoration: none;
@@ -130,6 +152,8 @@
         </section>
     </main>
 
+    <div class="write-toast" id="writeToast" role="status" aria-live="polite"></div>
+
     <script>
         if (!localStorage.getItem("auth_token")) {
             window.location.replace("/login");
@@ -138,6 +162,22 @@
         const form = document.getElementById("writeForm");
         const publishButton = document.getElementById("publishButton");
         const statusEl = document.getElementById("writeStatus");
+        const toastEl = document.getElementById("writeToast");
+        let toastTimer = null;
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add("is-visible");
+
+            if (toastTimer) {
+                window.clearTimeout(toastTimer);
+            }
+
+            toastTimer = window.setTimeout(() => {
+                toastEl.classList.remove("is-visible");
+                toastTimer = null;
+            }, 2200);
+        }
 
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -182,12 +222,17 @@
                 const articleId = data.article && Number(data.article.id);
 
                 statusEl.textContent = "Published.";
+                showToast("Post published successfully.");
                 if (articleId) {
-                    window.location.href = `/article.html?id=${articleId}`;
+                    window.setTimeout(() => {
+                        window.location.href = `/article.html?id=${articleId}`;
+                    }, 900);
                     return;
                 }
 
-                window.location.href = "/";
+                window.setTimeout(() => {
+                    window.location.href = "/";
+                }, 900);
             } catch (error) {
                 console.error("Publish failed:", error);
                 statusEl.textContent = error instanceof Error ? error.message : "Publish failed.";
