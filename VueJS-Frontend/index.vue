@@ -20,10 +20,20 @@
         </header>
 
         <section class="feed">
-            <h2>Feed</h2>
-            <p v-if="this.loading">Loading...</p>
-            <p v-else-if="this.error">{{ this.error }}</p>
-            <p v-else-if="this.posts.length === 0">No posts yet.</p>
+            <div class="feed-toolbar">
+                <h2>Feed</h2>
+                <button
+                    class="feed-refresh"
+                    type="button"
+                    :disabled="this.isRefreshing"
+                    @click="this.loadPosts({ silent: true })"
+                >
+                    {{ this.isRefreshing ? "Refreshing..." : "Refresh" }}
+                </button>
+            </div>
+            <p v-if="this.loading" class="feed-state">Loading...</p>
+            <p v-else-if="this.error" class="feed-state">{{ this.error }}</p>
+            <p v-else-if="this.posts.length === 0" class="feed-state">No posts yet.</p>
 
             <a
                 class="post-card"
@@ -49,6 +59,7 @@ export default {
         return {
             username: "username",
             isLoggedIn: false,
+            isRefreshing: false,
             posts: [],
             loading: true,
             error: "",
@@ -69,15 +80,27 @@ export default {
             this.username = "Guest";
         }
 
-        try {
-            this.posts = await getAllPosts();
-        } catch (err) {
-            this.error = err instanceof Error ? err.message : "Failed to load posts.";
-        } finally {
-            this.loading = false;
-        }
+        await this.loadPosts();
     },
     methods: {
+        async loadPosts({ silent = false } = {}) {
+            if (silent) {
+                this.isRefreshing = true;
+            } else {
+                this.loading = true;
+            }
+
+            this.error = "";
+
+            try {
+                this.posts = await getAllPosts();
+            } catch (err) {
+                this.error = err instanceof Error ? err.message : "Failed to load posts.";
+            } finally {
+                this.loading = false;
+                this.isRefreshing = false;
+            }
+        },
         getExcerpt(body) {
             const text = String(body || "").trim();
             if (!text) {
@@ -104,10 +127,11 @@ export default {
 <style scoped>
 .home-shell {
     width: min(860px, 100%);
+    margin-top: 22px;
 }
 
 .hero {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .eyebrow {
@@ -143,9 +167,9 @@ export default {
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 16px;
     box-shadow: 0 12px 34px rgba(53, 68, 116, 0.14);
-    height: 600px;
+    height: min(620px, calc(100vh - 220px));
     overflow-y: auto;
-    padding: 22px;
+    padding: 24px;
     scrollbar-gutter: stable;
 }
 
@@ -167,15 +191,51 @@ export default {
     background: rgba(93, 116, 198, 0.75);
 }
 
+.feed-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+
 .feed h2 {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     color: #1f2a44;
+}
+
+.feed-refresh {
+    width: auto;
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    background: #ffffff;
+    color: #2d3553;
+    border: 1px solid #c0c8ea;
+    cursor: pointer;
+}
+
+.feed-refresh:hover {
+    background: #f4f7ff;
+}
+
+.feed-refresh:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+.feed-state {
+    margin: 8px 0 0;
+    color: #59607a;
+    font-weight: 600;
 }
 
 .post-card {
     display: block;
     text-decoration: none;
-    padding: 15px 0;
+    padding: 16px 0;
     border-top: 1px solid rgba(45, 53, 83, 0.12);
     transition:
         transform 180ms ease,
@@ -203,6 +263,10 @@ export default {
     margin-bottom: 0;
     color: #4d5873;
     line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .post-card:hover {
@@ -225,6 +289,12 @@ export default {
     color: #1f2a44;
 }
 
+.post-card:focus-visible {
+    outline: 3px solid rgba(93, 116, 198, 0.36);
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
 .read-more {
     display: inline-block;
     margin-top: 8px;
@@ -235,7 +305,7 @@ export default {
 
 .corner-login {
     position: fixed;
-    top: 14px;
+    top: 58px;
     right: 14px;
     padding: 8px 12px;
     border-radius: 8px;
@@ -250,6 +320,13 @@ export default {
 .corner-login:hover {
     background: #f6f8ff;
     border-color: #b8c3e8;
+}
+
+.corner-login:focus-visible,
+.profile-button:focus-visible,
+.compose-button:focus-visible {
+    outline: 3px solid rgba(93, 116, 198, 0.36);
+    outline-offset: 3px;
 }
 
 .profile-button {
@@ -334,5 +411,39 @@ export default {
 
 .compose-button:active {
     transform: translateY(-2px) scale(1.01);
+}
+
+@media (max-width: 760px) {
+    .home-shell {
+        margin-top: 12px;
+    }
+
+    .hero h1 {
+        font-size: 34px;
+    }
+
+    .hero-copy {
+        font-size: 16px;
+    }
+
+    .feed {
+        height: min(560px, calc(100vh - 210px));
+        padding: 18px;
+    }
+
+    .feed-toolbar {
+        align-items: flex-start;
+    }
+
+    .feed h2 {
+        margin-bottom: 10px;
+    }
+
+    .compose-button {
+        width: 50px;
+        height: 50px;
+        right: 14px;
+        bottom: 14px;
+    }
 }
 </style>
