@@ -5,14 +5,260 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile</title>
     <link rel="stylesheet" href="/assets/main.css" />
+    <style>
+        .profile-shell {
+            width: min(860px, 100%);
+        }
+
+        .profile-card {
+            background: rgba(247, 249, 255, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            box-shadow: 0 12px 34px rgba(53, 68, 116, 0.14);
+            padding: 28px;
+        }
+
+        .profile-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .profile-title {
+            margin: 0;
+            color: #1f2a44;
+            font-size: 34px;
+        }
+
+        .profile-subtitle {
+            margin: 8px 0 0;
+            color: #59607a;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .profile-link {
+            text-decoration: none;
+            font-weight: 700;
+            color: #5d74c6;
+        }
+
+        .profile-link:hover {
+            text-decoration: underline;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 0 20px;
+        }
+
+        .stat-box {
+            background: #ffffff;
+            border: 1px solid #d8def3;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .stat-label {
+            margin: 0 0 6px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: #6d77a2;
+        }
+
+        .stat-value {
+            margin: 0;
+            font-size: 22px;
+            color: #202b47;
+            word-break: break-word;
+        }
+
+        .profile-posts h2 {
+            margin: 0 0 12px;
+            color: #1f2a44;
+        }
+
+        .profile-posts ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .profile-posts li {
+            border-top: 1px solid rgba(45, 53, 83, 0.12);
+            padding: 12px 0;
+        }
+
+        .profile-posts li:first-child {
+            border-top: 0;
+            padding-top: 0;
+        }
+
+        .profile-post-link {
+            color: #24304a;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .profile-post-link:hover {
+            color: #4f6ed9;
+        }
+
+        .profile-state {
+            margin: 0;
+            color: #59607a;
+        }
+
+        @media (max-width: 640px) {
+            .profile-top {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <main class="login-shell">
-        <section class="login-card">
-            <h1>Profile</h1>
-            <p>This page is intentionally empty for now.</p>
-            <p class="signup-link"><a href="/">Back to feed</a></p>
+    <main class="profile-shell">
+        <section class="profile-card">
+            <div class="profile-top">
+                <div>
+                    <h1 class="profile-title">Profile</h1>
+                    <p class="profile-subtitle" id="profileSubtitle">Loading your account...</p>
+                </div>
+                <div class="profile-actions">
+                    <a class="profile-link" href="/">Feed</a>
+                    <a class="profile-link" href="/logout">Logout</a>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-box">
+                    <p class="stat-label">Email</p>
+                    <p class="stat-value" id="profileEmail">-</p>
+                </article>
+                <article class="stat-box">
+                    <p class="stat-label">Role</p>
+                    <p class="stat-value" id="profileRole">-</p>
+                </article>
+                <article class="stat-box">
+                    <p class="stat-label">Your Posts</p>
+                    <p class="stat-value" id="profilePostCount">0</p>
+                </article>
+                <article class="stat-box">
+                    <p class="stat-label">Total Posts</p>
+                    <p class="stat-value" id="totalPostCount">0</p>
+                </article>
+            </div>
+
+            <section class="profile-posts">
+                <h2>Your recent posts</h2>
+                <p class="profile-state" id="profileState">Loading posts...</p>
+                <ul id="profilePostList"></ul>
+            </section>
+
+            <p class="profile-state" style="margin-top: 14px;">
+                <a class="profile-link" href="/">Back to feed</a>
+            </p>
         </section>
     </main>
+
+    <script>
+        const token = localStorage.getItem("auth_token") || "";
+        const subtitleEl = document.getElementById("profileSubtitle");
+        const emailEl = document.getElementById("profileEmail");
+        const roleEl = document.getElementById("profileRole");
+        const userPostCountEl = document.getElementById("profilePostCount");
+        const totalPostCountEl = document.getElementById("totalPostCount");
+        const stateEl = document.getElementById("profileState");
+        const postListEl = document.getElementById("profilePostList");
+
+        if (!token) {
+            window.location.replace("/login");
+        }
+
+        function authHeaders() {
+            return {
+                Accept: "application/json",
+                Authorization: `Bearer ${token}`,
+            };
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        async function loadProfile() {
+            try {
+                const [meResponse, postsResponse] = await Promise.all([
+                    fetch("/api/me", { headers: authHeaders() }),
+                    fetch("/api/posts", { headers: { Accept: "application/json" } }),
+                ]);
+
+                if (meResponse.status === 401) {
+                    localStorage.removeItem("auth_token");
+                    localStorage.removeItem("auth_email");
+                    window.location.replace("/login");
+                    return;
+                }
+
+                if (!meResponse.ok) {
+                    throw new Error("Failed to load profile");
+                }
+
+                if (!postsResponse.ok) {
+                    throw new Error("Failed to load posts");
+                }
+
+                const meData = await meResponse.json();
+                const postsData = await postsResponse.json();
+                const user = meData.user || {};
+                const allPosts = Array.isArray(postsData.posts) ? postsData.posts : [];
+                const userPosts = allPosts
+                    .filter((post) => Number(post.user_id) === Number(user.id))
+                    .sort((a, b) => Number(b.id) - Number(a.id));
+
+                subtitleEl.textContent = `Signed in as ${user.email || "user"}`;
+                emailEl.textContent = user.email || "-";
+                roleEl.textContent = user.role || "user";
+                userPostCountEl.textContent = String(userPosts.length);
+                totalPostCountEl.textContent = String(allPosts.length);
+
+                if (userPosts.length === 0) {
+                    stateEl.textContent = "You have not published any posts yet.";
+                    return;
+                }
+
+                stateEl.textContent = "";
+                postListEl.innerHTML = userPosts
+                    .slice(0, 10)
+                    .map((post) => {
+                        const safeTitle = escapeHtml(post.title || "Untitled");
+                        return `<li><a class="profile-post-link" href="/article.html?id=${Number(post.id)}">${safeTitle}</a></li>`;
+                    })
+                    .join("");
+            } catch (error) {
+                stateEl.textContent = error instanceof Error ? error.message : "Failed to load profile.";
+            }
+        }
+
+        loadProfile();
+    </script>
 </body>
 </html>
