@@ -26,6 +26,25 @@
             margin-bottom: 18px;
         }
 
+        .profile-identity {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(180deg, #7890e8 0%, #5b75d4 100%);
+            box-shadow: 0 10px 24px rgba(64, 93, 196, 0.28);
+        }
+
         .profile-title {
             margin: 0;
             color: #1f2a44;
@@ -40,6 +59,7 @@
         .profile-actions {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .profile-link {
@@ -54,7 +74,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
             margin: 0 0 20px;
         }
@@ -80,6 +100,16 @@
             font-size: 22px;
             color: #202b47;
             word-break: break-word;
+        }
+
+        .session-note {
+            margin: 0 0 18px;
+            color: #5a6483;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #d8def3;
+            border-radius: 10px;
+            padding: 10px 12px;
         }
 
         .profile-posts h2 {
@@ -118,11 +148,21 @@
             color: #59607a;
         }
 
+        .profile-footer-link {
+            margin-top: 14px;
+        }
+
         @media (max-width: 640px) {
             .profile-top {
                 flex-direction: column;
             }
 
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 460px) {
             .stats-grid {
                 grid-template-columns: 1fr;
             }
@@ -133,12 +173,16 @@
     <main class="profile-shell">
         <section class="profile-card">
             <div class="profile-top">
-                <div>
-                    <h1 class="profile-title">Profile</h1>
-                    <p class="profile-subtitle" id="profileSubtitle">Loading your account...</p>
+                <div class="profile-identity">
+                    <div class="profile-avatar" id="profileAvatar">U</div>
+                    <div>
+                        <h1 class="profile-title">Profile</h1>
+                        <p class="profile-subtitle" id="profileSubtitle">Loading your account...</p>
+                    </div>
                 </div>
                 <div class="profile-actions">
                     <a class="profile-link" href="/">Feed</a>
+                    <a class="profile-link" href="/write.html">Write</a>
                     <a class="profile-link" href="/logout">Logout</a>
                 </div>
             </div>
@@ -153,6 +197,14 @@
                     <p class="stat-value" id="profileRole">-</p>
                 </article>
                 <article class="stat-box">
+                    <p class="stat-label">Joined</p>
+                    <p class="stat-value" id="profileJoined">-</p>
+                </article>
+                <article class="stat-box">
+                    <p class="stat-label">Last Active</p>
+                    <p class="stat-value" id="profileLastActive">-</p>
+                </article>
+                <article class="stat-box">
                     <p class="stat-label">Your Posts</p>
                     <p class="stat-value" id="profilePostCount">0</p>
                 </article>
@@ -162,13 +214,15 @@
                 </article>
             </div>
 
+            <p class="session-note" id="sessionNote">Session: checking token lifetime...</p>
+
             <section class="profile-posts">
                 <h2>Your recent posts</h2>
                 <p class="profile-state" id="profileState">Loading posts...</p>
                 <ul id="profilePostList"></ul>
             </section>
 
-            <p class="profile-state" style="margin-top: 14px;">
+            <p class="profile-state profile-footer-link">
                 <a class="profile-link" href="/">Back to feed</a>
             </p>
         </section>
@@ -176,11 +230,15 @@
 
     <script>
         const token = localStorage.getItem("auth_token") || "";
+        const avatarEl = document.getElementById("profileAvatar");
         const subtitleEl = document.getElementById("profileSubtitle");
         const emailEl = document.getElementById("profileEmail");
         const roleEl = document.getElementById("profileRole");
+        const joinedEl = document.getElementById("profileJoined");
+        const lastActiveEl = document.getElementById("profileLastActive");
         const userPostCountEl = document.getElementById("profilePostCount");
         const totalPostCountEl = document.getElementById("totalPostCount");
+        const sessionNoteEl = document.getElementById("sessionNote");
         const stateEl = document.getElementById("profileState");
         const postListEl = document.getElementById("profilePostList");
 
@@ -202,6 +260,56 @@
                 .replaceAll(">", "&gt;")
                 .replaceAll('"', "&quot;")
                 .replaceAll("'", "&#39;");
+        }
+
+        function getInitials(email) {
+            const base = String(email || "").split("@")[0].trim();
+            if (!base) {
+                return "U";
+            }
+
+            const parts = base.split(/[._\-\s]+/).filter(Boolean);
+            if (parts.length >= 2) {
+                return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+            }
+
+            return base.slice(0, 2).toUpperCase();
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return "-";
+            }
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return "-";
+            }
+
+            return date.toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            });
+        }
+
+        function renderSessionNote() {
+            try {
+                const payloadPart = token.split(".")[1] || "";
+                const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+                const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+                const payload = JSON.parse(atob(padded));
+
+                if (!payload.exp) {
+                    sessionNoteEl.textContent = "Session: token has no expiration metadata.";
+                    return;
+                }
+
+                const expiry = new Date(Number(payload.exp) * 1000);
+                sessionNoteEl.textContent = `Session expires ${expiry.toLocaleString()}`;
+            } catch (_error) {
+                sessionNoteEl.textContent = "Session: token active.";
+            }
         }
 
         async function loadProfile() {
@@ -235,8 +343,11 @@
                     .sort((a, b) => Number(b.id) - Number(a.id));
 
                 subtitleEl.textContent = `Signed in as ${user.email || "user"}`;
+                avatarEl.textContent = getInitials(user.email || "");
                 emailEl.textContent = user.email || "-";
                 roleEl.textContent = user.role || "user";
+                joinedEl.textContent = formatDate(user.created);
+                lastActiveEl.textContent = formatDate(user.modified);
                 userPostCountEl.textContent = String(userPosts.length);
                 totalPostCountEl.textContent = String(allPosts.length);
 
@@ -258,6 +369,7 @@
             }
         }
 
+        renderSessionNote();
         loadProfile();
     </script>
 </body>

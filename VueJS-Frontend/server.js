@@ -60,6 +60,39 @@ function verifyPassword(plainPassword, storedPassword) {
     return plainPassword === storedPassword;
 }
 
+function slugify(value) {
+    const base = String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    return base || "post";
+}
+
+async function createUniqueSlug(title, excludeId = 0) {
+    const base = slugify(title);
+    let candidate = base;
+    let counter = 2;
+
+    while (true) {
+        const [rows] = await pool.query(
+            "SELECT id FROM articles WHERE slug = ? LIMIT 1",
+            [candidate],
+        );
+
+        const conflict = Array.isArray(rows) ? rows[0] : null;
+        if (!conflict || Number(conflict.id) === Number(excludeId || 0)) {
+            return candidate;
+        }
+
+        candidate = `${base}-${counter}`;
+        counter += 1;
+    }
+}
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST || "127.0.0.1",
     port: Number(process.env.DB_PORT || process.env.DATABASE_EXTERNAL_PORT || 3307),
@@ -195,6 +228,119 @@ app.get("/api/posts", async (_req, res) => {
         return res.json({ posts: Array.isArray(data.posts) ? data.posts : [] });
     } catch (_error) {
         return res.status(502).json({ posts: [] });
+    }
+});
+
+app.post("/api/posts", requireAuth, async (req, res) => {
+    const title = String(req.body?.title || "").trim();
+    const body = String(req.body?.body || "").trim();
+    const userId = Number(req.user?.sub || 0);
+
+    if (!userId || !title || !body) {
+        return res.status(400).json({ error: "title and body are required" });
+    }
+
+    try {
+        const slug = await createUniqueSlug(title);
+        const [result] = await pool.query(
+            "INSERT INTO articles (user_id, title, slug, body, published) VALUES (?, ?, ?, ?, 1)",
+            [userId, title, slug, body],
+        );
+
+        const [rows] = await pool.query(
+            "SELECT id, user_id, title, slug, body, published, created, modified FROM articles WHERE id = ? LIMIT 1",
+            [result.insertId],
+        );
+
+        const article = Array.isArray(rows) ? rows[0] : null;
+        return res.status(201).json({ article });
+    } catch (_error) {
+        return res.status(500).json({ error: "failed to create post" });
+    }
+});
+
+app.put("/api/posts/:id", requireAuth, async (req, res) => {
+    const articleId = Number(req.params.id || 0);
+    const userId = Number(req.user?.sub || 0);
+    const title = Object.prototype.hasOwnProperty.call(req.body ?? {}, "title")
+        ? String(req.body.title || "").trim()
+        : null;
+    const body = Object.prototype.hasOwnProperty.call(req.body ?? {}, "body")
+        ? String(req.body.body || "").trim()
+        : null;
+
+    if (!articleId || !userId) {
+        return res.status(400).json({ error: "invalid request" });
+    }
+
+    try {
+        const [rows] = await pool.query(
+            "SELECT id, user_id, title, body FROM articles WHERE id = ? LIMIT 1",
+            [articleId],
+        );
+
+        const article = Array.isArray(rows) ? rows[0] : null;
+        if (!article) {
+            return res.status(404).json({ error: "post not found" });
+        }
+
+        if (Number(article.user_id) !== userId) {
+            return res.status(403).json({ error: "forbidden" });
+        }
+
+        const nextTitle = title === null ? String(article.title || "") : title;
+        const nextBody = body === null ? String(article.body || "") : body;
+
+        if (!nextTitle || !nextBody) {
+            return res.status(400).json({ error: "title and body cannot be empty" });
+        }
+
+        const nextSlug = await createUniqueSlug(nextTitle, articleId);
+
+        await pool.query(
+            "UPDATE articles SET title = ?, slug = ?, body = ? WHERE id = ?",
+            [nextTitle, nextSlug, nextBody, articleId],
+        );
+
+        const [updatedRows] = await pool.query(
+            "SELECT id, user_id, title, slug, body, published, created, modified FROM articles WHERE id = ? LIMIT 1",
+            [articleId],
+        );
+
+        const updated = Array.isArray(updatedRows) ? updatedRows[0] : null;
+        return res.json({ article: updated });
+    } catch (_error) {
+        return res.status(500).json({ error: "failed to update post" });
+    }
+});
+
+app.delete("/api/posts/:id", requireAuth, async (req, res) => {
+    const articleId = Number(req.params.id || 0);
+    const userId = Number(req.user?.sub || 0);
+
+    if (!articleId || !userId) {
+        return res.status(400).json({ error: "invalid request" });
+    }
+
+    try {
+        const [rows] = await pool.query(
+            "SELECT id, user_id FROM articles WHERE id = ? LIMIT 1",
+            [articleId],
+        );
+
+        const article = Array.isArray(rows) ? rows[0] : null;
+        if (!article) {
+            return res.status(404).json({ error: "post not found" });
+        }
+
+        if (Number(article.user_id) !== userId) {
+            return res.status(403).json({ error: "forbidden" });
+        }
+
+        await pool.query("DELETE FROM articles WHERE id = ?", [articleId]);
+        return res.json({ ok: true });
+    } catch (_error) {
+        return res.status(500).json({ error: "failed to delete post" });
     }
 });
 
