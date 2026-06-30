@@ -26,6 +26,34 @@
     </main>
 
     <script>
+        async function redirectIfAlreadyLoggedIn() {
+            const token = localStorage.getItem("auth_token") || "";
+            if (!token) {
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/me", {
+                    headers: {
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    window.location.href = "/";
+                    return;
+                }
+            } catch (_error) {
+                // Keep user on signup form if the auth check fails.
+            }
+
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("auth_email");
+        }
+
+        redirectIfAlreadyLoggedIn();
+
         document.getElementById("accountCreateForm").addEventListener("submit", async (event) => {
             event.preventDefault();
 

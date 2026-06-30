@@ -18,6 +18,7 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const BACKEND_API_BASE = process.env.BACKEND_API_BASE || "http://backend";
 const BCRYPT_ROUNDS = 10;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 function getBearerToken(req) {
     const authHeader = req.headers.authorization || "";
@@ -108,7 +109,7 @@ app.post("/api/login", async (req, res) => {
         const token = jwt.sign(
             { sub: user.id, email: user.email },
             JWT_SECRET,
-            { expiresIn: "15m" },
+            { expiresIn: JWT_EXPIRES_IN },
         );
 
         return res.json({ token });
@@ -144,7 +145,7 @@ app.post("/api/signup", async (req, res) => {
         const token = jwt.sign(
             { sub: result.insertId, email: normalizedEmail },
             JWT_SECRET,
-            { expiresIn: "15m" },
+            { expiresIn: JWT_EXPIRES_IN },
         );
 
         return res.status(201).json({ token });
