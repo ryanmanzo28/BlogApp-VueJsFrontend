@@ -82,9 +82,9 @@
                 }
 
                 const data = await response.json();
-                const article = Array.isArray(data.posts)
-                    ? data.posts.find((post) => Number(post.id) === articleId)
-                    : null;
+                const posts = Array.isArray(data.posts) ? data.posts : [];
+                const articleIndex = posts.findIndex((post) => Number(post.id) === articleId);
+                const article = articleIndex >= 0 ? posts[articleIndex] : null;
 
                 if (!article) {
                     titleEl.textContent = "Article not found";
@@ -95,7 +95,7 @@
 
                 document.title = article.title || "Article";
                 titleEl.textContent = article.title || "Untitled";
-                metaEl.textContent = `Post #${article.id}`;
+                metaEl.textContent = `Post #${articleIndex + 1} of ${posts.length}`;
                 bodyEl.textContent = article.body || "";
             } catch (_error) {
                 titleEl.textContent = "Article unavailable";

@@ -81,6 +81,19 @@
             border-radius: 10px;
         }
 
+        .write-actions button:disabled {
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+
+        .write-status {
+            min-height: 1.25em;
+            margin: 10px 0 0;
+            color: #59607a;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
         .write-link {
             color: #5d74c6;
             text-decoration: none;
@@ -101,19 +114,87 @@
             <h1>Write post</h1>
             <p>Basic draft screen for testing layout.</p>
 
-            <form class="write-form">
+            <form class="write-form" id="writeForm">
                 <label for="title">Title</label>
-                <input type="text" id="title" name="title" placeholder="Give it a title" />
+                <input type="text" id="title" name="title" placeholder="Give it a title" required />
 
                 <label for="body">Body</label>
-                <textarea id="body" name="body" placeholder="Write something here..."></textarea>
+                <textarea id="body" name="body" placeholder="Write something here..." required></textarea>
 
                 <div class="write-actions">
-                    <button type="button">Save draft</button>
+                    <button type="submit" id="publishButton">Publish</button>
                     <a class="write-link" href="/">Back to feed</a>
                 </div>
+                <p class="write-status" id="writeStatus" aria-live="polite"></p>
             </form>
         </section>
     </main>
+
+    <script>
+        if (!localStorage.getItem("auth_token")) {
+            window.location.replace("/login");
+        }
+
+        const form = document.getElementById("writeForm");
+        const publishButton = document.getElementById("publishButton");
+        const statusEl = document.getElementById("writeStatus");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const title = document.getElementById("title").value.trim();
+            const body = document.getElementById("body").value.trim();
+
+            if (!title || !body) {
+                statusEl.textContent = "Title and body are required.";
+                return;
+            }
+
+            publishButton.disabled = true;
+            statusEl.textContent = "Publishing...";
+
+            try {
+                const response = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("auth_token") || ""}`,
+                    },
+                    body: JSON.stringify({ title, body }),
+                });
+
+                if (!response.ok) {
+                    let message = `Publish failed ${response.status}`;
+                    try {
+                        const errorBody = await response.json();
+                        if (errorBody && typeof errorBody.error === "string" && errorBody.error) {
+                            message = errorBody.error;
+                        }
+                    } catch (_error) {
+                        // Keep the default status-based error message.
+                    }
+
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+                const articleId = data.article && Number(data.article.id);
+
+                statusEl.textContent = "Published.";
+                if (articleId) {
+                    window.location.href = `/article.html?id=${articleId}`;
+                    return;
+                }
+
+                window.location.href = "/";
+            } catch (error) {
+                console.error("Publish failed:", error);
+                statusEl.textContent = error instanceof Error ? error.message : "Publish failed.";
+            } finally {
+                publishButton.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>

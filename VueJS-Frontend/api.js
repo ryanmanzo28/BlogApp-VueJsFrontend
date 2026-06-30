@@ -16,13 +16,14 @@ export function clearToken() {
 }
 
 export async function loginAndStoreToken(email, password) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
   const response = await fetch(`${AUTH_API_BASE}/api/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email: normalizedEmail, password }),
   });
 
   if (!response.ok) {
@@ -35,7 +36,7 @@ export async function loginAndStoreToken(email, password) {
   }
 
   setToken(data.token);
-  localStorage.setItem("auth_email", email);
+  localStorage.setItem("auth_email", normalizedEmail);
   return data.token;
 }
 
@@ -60,7 +61,6 @@ export async function getCurrentUser() {
 
   if (response.status === 401) {
     clearToken();
-    localStorage.removeItem("auth_email");
     throw new Error("Unauthorized");
   }
 
@@ -79,7 +79,6 @@ export async function getAllPosts() {
 
   if (response.status === 401) {
     clearToken();
-    localStorage.removeItem("auth_email");
     throw new Error("Unauthorized");
   }
 
